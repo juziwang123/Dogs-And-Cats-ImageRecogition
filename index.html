@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>猫狗识别应用</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; margin: 50px; }
+        #image-preview { max-width: 300px; max-height: 300px; margin-top: 20px; border: 1px solid #ccc; display: none; }
+        #result { margin-top: 20px; font-size: 24px; }
+    </style>
+</head>
+<body>
+    <h1>上传图片进行识别</h1>
+    <p>请上传一张猫或狗的图片</p>
+
+    <input type="file" id="image-upload" accept="image/*">
+    <br>
+    <img id="image-preview" src="#" alt="图片预览">
+
+    <div id="result"></div>
+
+    <script>
+        const imageUpload = document.getElementById('image-upload');
+        const imagePreview = document.getElementById('image-preview');
+        const resultDiv = document.getElementById('result');
+
+        imageUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+
+            // 显示图片预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagePreview.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            // 上传文件并获取预测结果
+            uploadFile(file);
+        });
+
+        function uploadFile(file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            resultDiv.textContent = '正在识别中...';
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    resultDiv.textContent = `错误: ${data.error}`;
+                } else {
+                    resultDiv.textContent = `预测结果：这是一只 ${data.label}，置信度为 ${data.confidence}。`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                resultDiv.textContent = '识别失败，请稍后重试。';
+            });
+        }
+    </script>
+</body>
+</html>
